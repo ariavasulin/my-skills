@@ -6,7 +6,3 @@ To do this, create a new session with the following command:
 ```text
 /plan-author
 ```
-
----
-
-You can view the full artifact in the right sidebar, or share with your teammates on the web [here](cloud permalink from the hook)

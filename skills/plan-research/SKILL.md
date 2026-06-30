@@ -18,6 +18,18 @@ You are tasked with conducting comprehensive research across the codebase to ans
 
 ## Initial Setup:
 
+**First, ensure the artifact store symlink exists in this worktree** (idempotent — re-running is a no-op):
+
+```bash
+# Ensure the planning-harness artifact store is linked into this worktree
+if [ ! -L .artifacts ]; then
+  MAIN=$(git worktree list --porcelain | head -1 | sed 's/worktree //')
+  REPO=$(basename "$MAIN")
+  mkdir -p "$HOME/artifacts/$REPO/archive"
+  ln -sfn "$HOME/artifacts/$REPO" .artifacts
+fi
+```
+
 When this command is invoked, check the task artifact directory from your system prompt for documents like `*research-questions*.md` with `ls -La` (the directory may be a symlink - do NOT use regular `ls` or grep/glob tools). If you find one, read it and proceed with the contents as the research query. 
 
 If you see several, ask the user which one to proceed with before reading any of them. 
@@ -76,19 +88,19 @@ Then wait for the user's research query.
    - Prioritize live codebase findings as primary source of truth
    - Connect findings across different components
    - Include specific file paths and line numbers for reference
-   - Verify all rpi/ paths are correct (task-specific files go in .humanlayer/tasks/)
+   - Verify all paths are correct (task-specific files go in `.artifacts/`)
    - Highlight patterns, connections, and architectural decisions
    - Answer the user's specific questions with concrete evidence
 
 5. **Gather metadata for the research document:**
-   - Filename: `.humanlayer/tasks/TASKNAME/NN-research-DESCRIPTION.md`
-     - First, check the task directory in your system prompt. If you do not see it, find the task directory: `ls -La .humanlayer/tasks | grep -i "eng-XXXX"`
-     - If the directory doesn't exist, create: `.humanlayer/tasks/ENG-XXXX-description/`
+   - Filename: `.artifacts/TASKNAME/NN-research-DESCRIPTION.md`
+     - First, check the task directory in your system prompt. If you do not see it, find the task directory: `ls -La .artifacts | grep -i "eng-XXXX"`
+     - If the directory doesn't exist, create: `.artifacts/ENG-XXXX-description/`
      - Format: `NN-research-DESCRIPTION.md` where NN is a zero-padded chronological index and DESCRIPTION is a 2-4 word kebab-case slug
      - **Chronological indexing**: `ls -La` the task directory, find the highest existing NN- prefix, and use the next number. First document = `01-`, second = `02-`, etc.
      - Directory naming:
-       - With ticket: `.humanlayer/tasks/ENG-1478-parent-child-tracking/02-research-parent-child-tracking.md`
-       - Without ticket: `.humanlayer/tasks/authentication-flow/02-research-auth-flow.md`
+       - With ticket: `.artifacts/ENG-1478-parent-child-tracking/02-research-parent-child-tracking.md`
+       - Without ticket: `.artifacts/authentication-flow/02-research-auth-flow.md`
 
 6. **Generate research document:**
    - Use the metadata gathered in step 4
@@ -96,12 +108,10 @@ Then wait for the user's research query.
 
    `Read({SKILLBASE}/references/research_template.md)`
 
-   - Write the document to `.humanlayer/tasks/TASKNAME/NN-research-DESCRIPTION.md`
+   - Write the document to `.artifacts/TASKNAME/NN-research-DESCRIPTION.md`
 
-7. **Note cloud permalinks:**
-   Cloud permalinks are automatically provided when you write artifacts. Include them in your final output.
-
-   For code references in the synclayer repo (if on main or pushed):
+7. **Add GitHub permalinks for code references:**
+   For code references in the repo you're researching (if on main or pushed):
    - Get repo info: `gh repo view --json owner,name`
    - Create permalinks: `https://github.com/{owner}/{repo}/blob/{commit}/{file}#L{line}`
 
@@ -109,7 +119,7 @@ Then wait for the user's research query.
 8. **Respond to the user according to the template**
    - Read the final output template:
    `Read({SKILLBASE}/references/research_final_answer.md)`
-   - Respond following the template exactly, include cloud permalinks if you have them.
+   - Respond following the template exactly.
 
 9. **Handle follow-up questions:**
    - If the user has follow-up questions, append to the same research document
@@ -181,8 +191,8 @@ technical depth and thoroughness.
   - ALWAYS wait for all sub-agents to complete before synthesizing (step 4)
   - ALWAYS gather metadata before writing the document (step 5 before step 6)
   - NEVER write the research document with placeholder values
-- **Path handling**: Task-specific research goes in .humanlayer/tasks/
-  - Use `.humanlayer/tasks/ENG-XXXX-description/NN-research-DESCRIPTION.md` for task research
+- **Path handling**: Task-specific research goes in .artifacts/
+  - Use `.artifacts/ENG-XXXX-description/NN-research-DESCRIPTION.md` for task research
 
 ## Response
 
@@ -198,13 +208,6 @@ There are N open questions that you should review, you can
 - tell me they are irrelevant and I'll remove them
 ```
 </important>
-
-## Cloud Permalinks
-
-When you write or edit documents in .humanlayer/tasks/, a cloud permalink is automatically provided in the hook response.
-- The permalink appears as `additionalContext` after Write/Edit/MultiEdit/Read operations
-- Use this permalink in your final output for easy navigation
-- Example format: `http(s)://{DOMAIN}/artifacts/{artifactId}`
 
 ## Markdown Formatting
 

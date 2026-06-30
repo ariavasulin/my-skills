@@ -11,6 +11,18 @@ The authoritative working contract is **`plans/IMPLEMENTATION.md`** (demo's nati
 
 ## Workflow
 
+**First, ensure the artifact store symlink exists in this worktree** so any intermediate docs the plan references resolve (idempotent — re-running is a no-op):
+
+```bash
+# Ensure the planning-harness artifact store is linked into this worktree
+if [ ! -L .artifacts ]; then
+  MAIN=$(git worktree list --porcelain | head -1 | sed 's/worktree //')
+  REPO=$(basename "$MAIN")
+  mkdir -p "$HOME/artifacts/$REPO/archive"
+  ln -sfn "$HOME/artifacts/$REPO" .artifacts
+fi
+```
+
 ### 0. Locate the plan
 - The plan is a git-tracked file at `plans/active/<module>/<slug>.md` (or `plans/active/<initiative>/...`, or under `python/investigations/.../` for investigation-coupled plans). If given a path, use it; if given a slug or module, `ls plans/active/` to find it. Unlike rpi, `plans/` is a normal tracked directory — no symlink caveats, use ordinary `ls`/Glob.
 - Read the plan FULLY (no limit/offset). Read `plans/IMPLEMENTATION.md` now; read `plans/AGENTS.md` too if the plan's shape (AC IDs, `Verify` blocks, shape mix) is unfamiliar.
@@ -35,7 +47,7 @@ Independently run the phase's `Verify` items plus the existing suite for touched
 On a mismatch, classify per IMPLEMENTATION.md § Divergence and re-plan (implementation-level / contract-level / stale AC prose / re-plan / re-plan upward). Contract-level deviations update the plan in the same PR with rationale; a re-plan stops and escalates to the human. Keep this on the main thread — it is the work of holding the contract.
 
 ### 5. Report to the human and checkpoint
-Summarize the phase: completed work, automated-verification results, and the manual checks the human still needs to perform. Then checkpoint per the root git workflow — `git add <files>` then `git commit --no-verify -m "checkpoint: <message>"`. The plan lives in `plans/active/` and is tracked: commit it alongside the code (refreshed `updated:` date, ticked boxes, logged deviations). There is no `.humanlayer/tasks` symlink to exclude.
+Summarize the phase: completed work, automated-verification results, and the manual checks the human still needs to perform. Then checkpoint per the root git workflow — `git add <files>` then `git commit --no-verify -m "checkpoint: <message>"`. The plan lives in `plans/active/` and is tracked: commit it alongside the code (refreshed `updated:` date, ticked boxes, logged deviations). Any intermediate docs in `.artifacts/` are gitignored via the global net, so there is nothing to exclude.
 
 ### 6. Wait for confirmation, then next phase
 Unless expressly told to run phases consecutively, do not proceed to the next phase or finalize until the human has reviewed and approved this one. When cleared, repeat from step 1 for the next phase.
@@ -49,10 +61,6 @@ When all phases are verified and marked, run the **completion retro** and the **
 Respond following the template exactly. Do not include a summary or other information beyond it.
 
 <guidance>
-## Cloud Permalinks
-
-If any intermediate doc you touch lives in `.humanlayer/tasks/`, a cloud permalink is auto-provided in the hook response (`additionalContext` after Write/Edit/Read). Use it in your final output. The plan itself is in git-tracked `plans/active/`, not `.humanlayer/tasks/`, so reference it by repo path.
-
 ## Markdown Formatting
 
 When writing markdown that contains code blocks showing other markdown, use 4 backticks (````) for the outer fence so inner 3-backtick blocks don't prematurely close it.

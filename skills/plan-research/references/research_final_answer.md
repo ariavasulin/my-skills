@@ -10,7 +10,3 @@ When you're ready to proceed to the design phase, you can use the button below o
 /plan-design
 ```
 
----
-
-You can view the full artifact in the right sidebar, or on the web [here](cloud permalink from the hook)
-

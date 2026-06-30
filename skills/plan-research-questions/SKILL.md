@@ -15,9 +15,21 @@ These questions will be used by another agent to research the codebase.
 
 ## Steps to follow after receiving the user's request
 
+**First, ensure the artifact store symlink exists in this worktree** (idempotent — re-running is a no-op):
+
+```bash
+# Ensure the planning-harness artifact store is linked into this worktree
+if [ ! -L .artifacts ]; then
+  MAIN=$(git worktree list --porcelain | head -1 | sed 's/worktree //')
+  REPO=$(basename "$MAIN")
+  mkdir -p "$HOME/artifacts/$REPO/archive"
+  ln -sfn "$HOME/artifacts/$REPO" .artifacts
+fi
+```
+
 1. **Read all @-mentioned files immediately and FULLY**:
 
-    - Ticket files (e.g., `.humanlayer/tasks/<task slug>/ticket.md`)
+    - Ticket files (e.g., `.artifacts/<task slug>/ticket.md`)
     - collateral files if explicitly mentioned
     - **DO NOT** read other artifacts unless requested. 
     - Review these materials carefully before creating research questions
@@ -73,14 +85,14 @@ These questions will be used by another agent to research the codebase.
 
 Follow this format, using an appropriate number of questions for the task (less than 8 except for the largest of tasks or unless requested by the user, no less than 2, use your judgement)
 
-2. **Write the research questions** to `.humanlayer/tasks/TASKNAME/NN-research-questions-DESCRIPTION.md`
-   - First, check if a related task directory exists: `ls -La .humanlayer/tasks | grep -i "eng-XXXX"`
-   - If the directory doesn't exist, create: `.humanlayer/tasks/ENG-XXXX-description/`
+2. **Write the research questions** to `.artifacts/TASKNAME/NN-research-questions-DESCRIPTION.md`
+   - First, check if a related task directory exists: `ls -La .artifacts | grep -i "eng-XXXX"`
+   - If the directory doesn't exist, create: `.artifacts/ENG-XXXX-description/`
    - Format: `NN-research-questions-DESCRIPTION.md` where NN is a zero-padded chronological index and DESCRIPTION is a 2-4 word kebab-case slug
    - **Chronological indexing**: `ls -La` the task directory, find the highest existing NN- prefix, and use the next number. First document = `01-`, second = `02-`, etc.
    - Directory naming:
-     - With ticket: `.humanlayer/tasks/ENG-1478-parent-child-tracking/01-research-questions-parent-child-tracking.md`
-     - Without ticket: `.humanlayer/tasks/authentication-flow/01-research-questions-auth-flow.md`
+     - With ticket: `.artifacts/ENG-1478-parent-child-tracking/01-research-questions-parent-child-tracking.md`
+     - Without ticket: `.artifacts/authentication-flow/01-research-questions-auth-flow.md`
 
 3. **Read the final output template**
 
@@ -100,12 +112,3 @@ Consider carefully if UI or frontend changes are involved, even if not explicity
 
 This is the one question category that does not need to be tailored to the specific UI work described in the ticket - if we're making frontend changes, we need to understand the design system and patterns for one-off html mockups.
 </important>
-
-<guidance>
-## Cloud Permalinks
-
-When you write or edit documents in .humanlayer/tasks/, a cloud permalink is automatically provided in the hook response.
-- The permalink appears as `additionalContext` after Write/Edit/MultiEdit/Read operations
-- Use this permalink in your final output for easy navigation
-- Example format: `http(s)://{DOMAIN}/artifacts/{artifactId}`
-</guidance>

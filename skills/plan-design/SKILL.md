@@ -9,17 +9,29 @@ You are now in the Design Discussion phase. Based on the research findings and t
 
 ## Steps to follow after receiving the user's request
 
+**First, ensure the artifact store symlink exists in this worktree** (idempotent — re-running is a no-op):
+
+```bash
+# Ensure the planning-harness artifact store is linked into this worktree
+if [ ! -L .artifacts ]; then
+  MAIN=$(git worktree list --porcelain | head -1 | sed 's/worktree //')
+  REPO=$(basename "$MAIN")
+  mkdir -p "$HOME/artifacts/$REPO/archive"
+  ln -sfn "$HOME/artifacts/$REPO" .artifacts
+fi
+```
+
 1. **Read the files in the task artifact directory and any mentioned files immediately and FULLY**:
-   - `ls -La .humanlayer/tasks/TASKSLUG` to find all related documents in the task directory. Do NOT use the Grep or Glob tools, or `ls -l` as the directory may be a symlink.\
-   - Ticket files (e.g., `.humanlayer/tasks/eng-1234-description/ticket.md`)
-   - Research documents (e.g. `.humanlayer/tasks/eng-1234-description/NN-research-DESCRIPTION.md`)
+   - `ls -La .artifacts/TASKSLUG` to find all related documents in the task directory. Do NOT use the Grep or Glob tools, or `ls -l` as the directory may be a symlink.\
+   - Ticket files (e.g., `.artifacts/eng-1234-description/ticket.md`)
+   - Research documents (e.g. `.artifacts/eng-1234-description/NN-research-DESCRIPTION.md`)
    - **DO NOT read research questions documents** - research questions are inputs to the research phase only.
    - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files, never read files partially - if a file is mentioned, read it completely
    - do not spawn sub-tasks before reading these files yourself in the main context
 
 2. **Check for related task content**:
-   - if a path in `.humanlayer/tasks/TASKNAME` is mentioned, use Bash(`ls -La .humanlayer/tasks/TASKNAME`)
-   - **IMPORTANT** DO NOT USE search or glob or grep, or `ls -l` (lowercase L), as .humanlayer/tasks may be a symlink and those tools don't traverse symlinks
+   - if a path in `.artifacts/TASKNAME` is mentioned, use Bash(`ls -La .artifacts/TASKNAME`)
+   - **IMPORTANT** DO NOT USE search or glob or grep, or `ls -l` (lowercase L), as .artifacts may be a symlink and those tools don't traverse symlinks
    - read all relevant files in the task directory to fully understand the work so far, excluding research questions documents
 
 3. **Optional - Spawn parallel sub-tasks for comprehensive research**:
@@ -50,14 +62,14 @@ You are now in the Design Discussion phase. Based on the research findings and t
 
 `Read({SKILLBASE}/references/design_discussion_template.md)`
 
-5. **Write the design discussion** to `.humanlayer/tasks/ENG-XXXX-description/NN-design-discussion-DESCRIPTION.md`
-   - First, check the task directory in your system prompt. If you don't see it, find the task directory: `ls -La .humanlayer/tasks | grep -i "eng-XXXX"`
-   - If the directory doesn't exist, create: `.humanlayer/tasks/ENG-XXXX-description/`
+5. **Write the design discussion** to `.artifacts/ENG-XXXX-description/NN-design-discussion-DESCRIPTION.md`
+   - First, check the task directory in your system prompt. If you don't see it, find the task directory: `ls -La .artifacts | grep -i "eng-XXXX"`
+   - If the directory doesn't exist, create: `.artifacts/ENG-XXXX-description/`
    - Format: `NN-design-discussion-DESCRIPTION.md` where NN is a zero-padded chronological index and DESCRIPTION is a 2-4 word kebab-case slug
    - **Chronological indexing**: `ls` the task directory, find the highest existing NN- prefix, and use the next number. First document = `01-`, second = `02-`, etc.
    - Directory naming:
-     - With ticket: `.humanlayer/tasks/ENG-1478-parent-child-tracking/03-design-discussion-parent-child-tracking.md`
-     - Without ticket: `.humanlayer/tasks/improve-error-handling/03-design-discussion-error-handling.md`
+     - With ticket: `.artifacts/ENG-1478-parent-child-tracking/03-design-discussion-parent-child-tracking.md`
+     - Without ticket: `.artifacts/improve-error-handling/03-design-discussion-error-handling.md`
 
 <content_guidance>
 **Outline High-level product spec** - Current state, desired end state, what we're not doing in terms of user experience or functionality
@@ -96,16 +108,9 @@ If hook context says all design questions have been resolved, read the resolved 
 
 `Read({SKILLBASE}/references/design_discussion_final_answer_resolved.md)`
 
-7. Respond following the selected template exactly. Do not include a summary or other information. Include cloud permalinks if available.
+7. Respond following the selected template exactly. Do not include a summary or other information.
 
 <guidance>
-## Cloud Permalinks
-
-When you write or edit documents in .humanlayer/tasks/, a cloud permalink is automatically provided in the hook response.
-- The permalink appears as `additionalContext` after Write/Edit/MultiEdit/Read operations
-- Use this permalink in your final output for easy navigation
-- Example format: `http(s)://{DOMAIN}/artifacts/{artifactId}`
-
 ## Markdown Formatting
 
 When writing markdown files that contain code blocks showing other markdown (like README examples or SKILL.md templates), use 4 backticks (````) for the outer fence so inner 3-backtick code blocks don't prematurely close it:

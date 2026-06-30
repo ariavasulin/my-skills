@@ -9,9 +9,21 @@ You are in the final Plan Writing phase. Author a complete, mechanism-precise im
 
 ## Steps
 
+**First, ensure the artifact store symlink exists in this worktree** (idempotent — re-running is a no-op):
+
+```bash
+# Ensure the planning-harness artifact store is linked into this worktree
+if [ ! -L .artifacts ]; then
+  MAIN=$(git worktree list --porcelain | head -1 | sed 's/worktree //')
+  REPO=$(basename "$MAIN")
+  mkdir -p "$HOME/artifacts/$REPO/archive"
+  ln -sfn "$HOME/artifacts/$REPO" .artifacts
+fi
+```
+
 1. **Read all input files FULLY**:
    - Use Read tool WITHOUT limit/offset to read all provided file paths
-   - `ls -La .humanlayer/tasks/TASKNAME` to find all related documents in the task directory. Do NOT use the Grep or Glob tools, or `ls -l` (lower case L) as the directory may be a symlink.
+   - `ls -La .artifacts/TASKNAME` to find all related documents in the task directory. Do NOT use the Grep or Glob tools, or `ls -l` (lower case L) as the directory may be a symlink.
    - Read everything in the task directory to build full context, excluding research questions documents
    - **DO NOT read research questions documents** - research questions are inputs to the research phase only. Use the completed research document instead.
 
@@ -25,7 +37,7 @@ You are in the final Plan Writing phase. Author a complete, mechanism-precise im
 
 `Read({SKILLBASE}/references/plan_template.md)`
 
-4. **Write the plan into the demo `plans/` corpus** (git-tracked, NOT `.humanlayer/tasks/`):
+4. **Write the plan into the demo `plans/` corpus** (git-tracked, NOT the `.artifacts/` store):
    - Determine the module the work belongs to (e.g. `allocator`, `budget-pacer`, `anomalies`). Write to `plans/active/<module>/<slug>.md` for module-scoped work, or `plans/active/<initiative>.md` / `plans/active/<initiative>/` for cross-cutting work. Investigation-coupled plans live under `python/investigations/.../` per `plans/AGENTS.md`.
    - Add the frontmatter the contract expects: `status: active`, `created:`, `updated:`.
    - In the preamble, declare the plan's shape mix (design doc / tech spec / implementation plan) and, if lightweight, justify it per the proportionality rule.
@@ -57,13 +69,6 @@ The plan is the final authority. Follow the design decisions over the original t
 2. Respond following the template exactly. Do not include a summary or other information.
 
 <guidance>
-## Cloud Permalinks
-
-When you write or edit documents in .humanlayer/tasks/, a cloud permalink is automatically provided in the hook response.
-- The permalink appears as `additionalContext` after Write/Edit/MultiEdit/Read operations
-- Use this permalink in your final output for easy navigation
-- Example format: `http(s)://{DOMAIN}/artifacts/{artifactId}`
-
 ## Markdown Formatting
 
 When writing markdown files that contain code blocks showing other markdown (like README examples or SKILL.md templates), use 4 backticks (````) for the outer fence so inner 3-backtick code blocks don't prematurely close it:
