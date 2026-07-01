@@ -30,6 +30,10 @@ if [ ! -L .artifacts ]; then
 fi
 ```
 
+**Auto-advance flag.** Check the arguments for `-a` or `--auto`. If present, auto-advance is ON for
+this run; otherwise OFF. This flag changes only the final closing step (Output Format step 4) —
+nothing else.
+
 1. **Read all @-mentioned files immediately and FULLY**:
 
     - Ticket files (e.g., `.artifacts/<task slug>/ticket.md`)
@@ -101,7 +105,12 @@ Follow this format, using an appropriate number of questions for the task (less 
 
 `Read({SKILLBASE}/references/research_questions_final_answer.md)`
 
-4. Respond following the template EXACTLY. Do not include a summary or other information.
+4. **Close the phase.** Respond following the template EXACTLY. Do not include a summary or other information. Then:
+   - **Auto-advance OFF** (or `$ORCA_TERMINAL_HANDLE` is empty): stop here. Send nothing.
+   - **Auto-advance ON** and `$ORCA_TERMINAL_HANDLE` non-empty: as your final action, run exactly this one command — do not list terminals or run anything else first. It waits for this session to go idle (your turn to finish), then launches the next phase in this same terminal:
+     ```bash
+     nohup bash -c 'sleep 2; orca terminal wait --terminal "$ORCA_TERMINAL_HANDLE" --for tui-idle --timeout-ms 600000; orca terminal send --terminal "$ORCA_TERMINAL_HANDLE" --text "/plan-research --auto" --enter' >/dev/null 2>&1 &
+     ```
 
 <important>
 If the ticket might involve frontend work or new/updated visual components, YOU MUST ensure research questions cover the project's design system. 

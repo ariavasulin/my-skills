@@ -24,6 +24,9 @@ if [ ! -L .artifacts ]; then
 fi
 ```
 
+**Note on `-a` / `--auto`:** if this flag appears in the arguments, ignore it. `plan-design` is the
+human gate where the auto-advance chain stops — it never launches the next phase automatically.
+
 1. **Read the files in the task artifact directory and any mentioned files immediately and FULLY**:
    - `ls -La .artifacts/TASKSLUG` to find all related documents in the task directory. Do NOT use the Grep or Glob tools, or `ls -l` as the directory may be a symlink.\
    - Ticket files (e.g., `.artifacts/eng-1234-description/ticket.md`)

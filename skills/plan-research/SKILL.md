@@ -33,6 +33,9 @@ if [ ! -L .artifacts ]; then
 fi
 ```
 
+**Auto-advance flag.** Check the arguments for `-a` or `--auto`. If present, auto-advance is ON for
+this run; otherwise OFF. This flag changes only the final closing step (step 8) — nothing else.
+
 When this command is invoked, check the task artifact directory from your system prompt for documents like `*research-questions*.md` with `ls -La` (the directory may be a symlink - do NOT use regular `ls` or grep/glob tools). If you find one, read it and proceed with the contents as the research query. 
 
 If you see several, ask the user which one to proceed with before reading any of them. 
@@ -119,10 +122,15 @@ Then wait for the user's research query.
    - Create permalinks: `https://github.com/{owner}/{repo}/blob/{commit}/{file}#L{line}`
 
 
-8. **Respond to the user according to the template**
+8. **Close the phase.**
    - Read the final output template:
    `Read({SKILLBASE}/references/research_final_answer.md)`
-   - Respond following the template exactly.
+   - Respond following the template exactly. Then:
+     - **Auto-advance OFF** (or `$ORCA_TERMINAL_HANDLE` is empty): stop here. Send nothing.
+     - **Auto-advance ON** and `$ORCA_TERMINAL_HANDLE` non-empty: as your final action, run exactly this one command — do not list terminals or run anything else first. It waits for this session to go idle (your turn to finish), then launches the design phase in this same terminal. Note the injected command carries **no** `--auto`: `plan-design` is the human gate where the auto chain stops.
+       ```bash
+       nohup bash -c 'sleep 2; orca terminal wait --terminal "$ORCA_TERMINAL_HANDLE" --for tui-idle --timeout-ms 600000; orca terminal send --terminal "$ORCA_TERMINAL_HANDLE" --text "/plan-design" --enter' >/dev/null 2>&1 &
+       ```
 
 9. **Handle follow-up questions:**
    - If the user has follow-up questions, append to the same research document
