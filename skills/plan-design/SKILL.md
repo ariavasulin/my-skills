@@ -16,8 +16,11 @@ You are now in the Design Discussion phase. Based on the research findings and t
 if [ ! -L .artifacts ]; then
   MAIN=$(git worktree list --porcelain | head -1 | sed 's/worktree //')
   REPO=$(basename "$MAIN")
-  mkdir -p "$HOME/artifacts/$REPO/archive"
-  ln -sfn "$HOME/artifacts/$REPO" .artifacts
+  # Store lives under the Orca workspaces root (an "allowed root") so Orca's file
+  # explorer can open it; one physical store shared by all worktrees of this repo.
+  STORE="$HOME/orca/workspaces/$REPO/.artifacts-store"
+  mkdir -p "$STORE/archive"
+  ln -sfn "$STORE" .artifacts
 fi
 ```
 
