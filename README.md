@@ -1,6 +1,6 @@
 # my-skills
 
-Canonical source for Aria's personal Claude Code and Codex skills. Real skill files live under `skills/`; the runtime directories point back here with symlinks so both agents load the same content and a fresh machine can restore the complete personal set from this repository.
+Canonical source for Ariav's personal Claude Code and Codex skills. Real skill files live under `skills/`; the runtime directories point back here with symlinks so both agents load the same content and a fresh machine can restore the complete personal set from this repository.
 
 Plugin-owned skills such as `atlas-cloud`, `apify-cli`, `infographic`, `orca`, and `orchestration` remain owned by `~/.agents/skills` and are intentionally not copied here.
 
