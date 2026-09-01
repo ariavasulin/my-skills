@@ -1,19 +1,8 @@
 ---
-name: plan-research-questions
-description: "Personal planning front-end (step 1 of 4) for the demo codebase: generate blind, non-leaking research questions from a ticket/task. Forked from rpi create-research-questions, adapted for demo+peprkit. Next step: /plan-research."
+name: create-research-questions
+description: generate research questions based on a task, spec, or ticket
+disable-model-invocation: true
 ---
-
-# Research Planning Phase
-
-You are a research orchestrator helping to create research questions - a query plan - about the current codebase, relevant dependencies and libraries, and other pertinent details - for further research based on the user's task. 
-
-
-Your job is to work with the user to create a comprehensive set of research questions that focus ONLY on understanding how the codebase works today.
-
-These questions will be used by another agent to research the codebase.
-
-
-## Steps to follow after receiving the user's request
 
 **First, ensure the artifact store symlink exists in this worktree** (idempotent — re-running is a no-op):
 
@@ -31,8 +20,19 @@ fi
 ```
 
 **Auto-advance flag.** Check the arguments for `-a` or `--auto`. If present, auto-advance is ON for
-this run; otherwise OFF. This flag changes only the final closing step (Output Format step 4) —
-nothing else.
+this run; otherwise OFF. This flag changes only the final closing step — nothing else.
+
+# Research Planning Phase
+
+You are a research orchestrator helping to create research questions - a query plan - about the current codebase, relevant dependencies and libraries, and other pertinent details - for further research based on the user's task. 
+
+
+Your job is to work with the user to create a comprehensive set of research questions that focus ONLY on understanding how the codebase works today.
+
+These questions will be used by another agent to research the codebase.
+
+
+## Steps to follow after receiving the user's request
 
 1. **Read all @-mentioned files immediately and FULLY**:
 
@@ -92,24 +92,25 @@ nothing else.
 
 Follow this format, using an appropriate number of questions for the task (less than 8 except for the largest of tasks or unless requested by the user, no less than 2, use your judgement)
 
-2. **Write the research questions** to `.artifacts/YYYY-MM-DD-eng-XXXX-description/NN-research-questions-DESCRIPTION.md`
-   - First, check if a related task directory exists: `ls -La .artifacts | grep -i "eng-XXXX"` (match on the ticket/slug — existing directories may or may not carry a date prefix; reuse them as-is)
-   - If the directory doesn't exist, create: `.artifacts/YYYY-MM-DD-eng-XXXX-description/` — prefix with today's date (`date +%F`), everything kebab-case (lowercase, hyphen-separated)
+2. **Write the research questions** to `.artifacts/TASKNAME/NN-research-questions-DESCRIPTION.md`
+   - First, check if a related task directory exists: `ls -La .artifacts | grep -i "eng-XXXX"`
+   - If the directory doesn't exist, create: `.artifacts/ENG-XXXX-description/`
+   - If the task directory has no `ticket.md`, write one first: capture the user's task/ticket text (verbatim from the invocation or pasted ticket, plus any clarifications from this conversation) to `.artifacts/TASKNAME/ticket.md`. Downstream skills (`create-design-discussion`, `create-plan`, `setup-worktree`) read this file; without the HumanLayer IDE nothing else creates it.
    - Format: `NN-research-questions-DESCRIPTION.md` where NN is a zero-padded chronological index and DESCRIPTION is a 2-4 word kebab-case slug
    - **Chronological indexing**: `ls -La` the task directory, find the highest existing NN- prefix, and use the next number. First document = `01-`, second = `02-`, etc.
    - Directory naming:
-     - With ticket: `.artifacts/2026-07-03-eng-1478-parent-child-tracking/01-research-questions-parent-child-tracking.md`
-     - Without ticket: `.artifacts/2026-07-03-authentication-flow/01-research-questions-auth-flow.md`
+     - With ticket: `.artifacts/ENG-1478-parent-child-tracking/01-research-questions-parent-child-tracking.md`
+     - Without ticket: `.artifacts/authentication-flow/01-research-questions-auth-flow.md`
 
 3. **Read the final output template**
 
 `Read({SKILLBASE}/references/research_questions_final_answer.md)`
 
-4. **Close the phase.** Respond following the template EXACTLY. Do not include a summary or other information. Then:
+4. Respond following the template EXACTLY. Do not include a summary or other information. Then:
    - **Auto-advance OFF** (or `$ORCA_TERMINAL_HANDLE` is empty): stop here. Send nothing.
-   - **Auto-advance ON** and `$ORCA_TERMINAL_HANDLE` non-empty: as your final action, run exactly this one command — do not list terminals or run anything else first. It waits for this session to go idle (your turn to finish), then launches the next phase in this same terminal:
+   - **Auto-advance ON** and `$ORCA_TERMINAL_HANDLE` non-empty: as your final action, run exactly this one command, substituting `TASKNAME` with the actual task directory name — do not list terminals or run anything else first. It waits for this session to go idle (your turn to finish), clears the session with `/clear`, then launches the research phase in this same terminal, passing the task directory explicitly (the cleared session has no context left to infer it from). (Deliberately no `--terminal` flag: the orca CLI resolves the current terminal from the PTY; `$ORCA_TERMINAL_HANDLE` can go stale when Orca recreates terminals, so never pass it.)
      ```bash
-     nohup bash -c 'sleep 2; orca terminal wait --terminal "$ORCA_TERMINAL_HANDLE" --for tui-idle --timeout-ms 600000; orca terminal send --terminal "$ORCA_TERMINAL_HANDLE" --text "/plan-research --auto" --enter' >/dev/null 2>&1 &
+     nohup bash -c 'sleep 2; orca terminal wait --for tui-idle --timeout-ms 600000; orca terminal send --text "/clear" --enter; sleep 2; orca terminal send --text "/create-research --auto .artifacts/TASKNAME" --enter' >/dev/null 2>&1 &
      ```
 
 <important>
@@ -124,3 +125,4 @@ Consider carefully if UI or frontend changes are involved, even if not explicity
 
 This is the one question category that does not need to be tailored to the specific UI work described in the ticket - if we're making frontend changes, we need to understand the design system and patterns for one-off html mockups.
 </important>
+

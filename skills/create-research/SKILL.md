@@ -1,22 +1,8 @@
 ---
-name: plan-research
-description: "Personal planning front-end (step 2 of 4) for the demo codebase: answer the research questions by spawning parallel codebase sub-agents — blind to the task framing — and synthesize a research doc. Self-contained; does not touch peprkit research-codebase. Next step: /plan-design."
+name: create-research
+description:  research the codebase 
+disable-model-invocation: true
 ---
-
-# Research Codebase
-
-You are tasked with conducting comprehensive research across the codebase to answer user questions by spawning parallel sub-agents and synthesizing their findings.
-
-## CRITICAL: YOUR ONLY JOB IS TO DOCUMENT AND EXPLAIN THE CODEBASE AS IT EXISTS TODAY
-- DO NOT suggest improvements or changes unless the user explicitly asks for them
-- DO NOT perform root cause analysis unless the user explicitly asks for them
-- DO NOT propose future enhancements unless the user explicitly asks for them
-- DO NOT critique the implementation or identify problems
-- DO NOT recommend refactoring, optimization, or architectural changes
-- ONLY describe what exists, where it exists, how it works, and how components interact
-- You are creating a technical map/documentation of the existing system
-
-## Initial Setup:
 
 **First, ensure the artifact store symlink exists in this worktree** (idempotent — re-running is a no-op):
 
@@ -34,13 +20,28 @@ fi
 ```
 
 **Auto-advance flag.** Check the arguments for `-a` or `--auto`. If present, auto-advance is ON for
-this run; otherwise OFF. This flag changes only the final closing step (step 8) — nothing else.
+this run; otherwise OFF. This flag changes only the final closing step — nothing else.
 
-When this command is invoked, check the task artifact directory from your system prompt for documents like `*research-questions*.md` with `ls -La` (the directory may be a symlink - do NOT use regular `ls` or grep/glob tools). If you find one, read it and proceed with the contents as the research query. 
+# Research Codebase
+
+You are tasked with conducting comprehensive research across the codebase to answer user questions by spawning parallel sub-agents and synthesizing their findings.
+
+## CRITICAL: YOUR ONLY JOB IS TO DOCUMENT AND EXPLAIN THE CODEBASE AS IT EXISTS TODAY
+- DO NOT suggest improvements or changes unless the user explicitly asks for them
+- DO NOT perform root cause analysis unless the user explicitly asks for them
+- DO NOT propose future enhancements unless the user explicitly asks for them
+- DO NOT critique the implementation or identify problems
+- DO NOT recommend refactoring, optimization, or architectural changes
+- ONLY describe what exists, where it exists, how it works, and how components interact
+- You are creating a technical map/documentation of the existing system
+
+## Initial Setup:
+
+When this command is invoked with a task directory as its argument (e.g. `/create-research --auto .artifacts/ENG-1234-description`), use that directory directly — `ls -La` it, read the latest `*research-questions*.md` in it as the research query, and skip the discovery below. Otherwise, check the task artifact directory from your system prompt for documents like `*research-questions*.md` with `ls -La` (the directory may be a symlink - do NOT use regular `ls` or grep/glob tools). If you find one, read it and proceed with the contents as the research query. 
 
 If you see several, ask the user which one to proceed with before reading any of them. 
 
-If you do not know what the task artifact directory is from your system prompt, respond with:
+If the system prompt doesn't name a task directory and the conversation doesn't identify one, look for it yourself: `ls -La .artifacts` and pick the task directory whose most recent document matches `*research-questions*.md`. If several task directories qualify, ask the user which one. Only if none exists, respond with:
 ```
 I'm ready to research the codebase. Please provide your research question or area of interest, and I'll analyze it thoroughly by exploring relevant components and connections.
 ```
@@ -94,19 +95,19 @@ Then wait for the user's research query.
    - Prioritize live codebase findings as primary source of truth
    - Connect findings across different components
    - Include specific file paths and line numbers for reference
-   - Verify all paths are correct (task-specific files go in `.artifacts/`)
+   - Verify all rpi/ paths are correct (task-specific files go in .artifacts/)
    - Highlight patterns, connections, and architectural decisions
    - Answer the user's specific questions with concrete evidence
 
 5. **Gather metadata for the research document:**
-   - Filename: `.artifacts/YYYY-MM-DD-eng-XXXX-description/NN-research-DESCRIPTION.md`
-     - First, check the task directory in your system prompt. If you do not see it, find the task directory: `ls -La .artifacts | grep -i "eng-XXXX"` (match on the ticket/slug — existing directories may or may not carry a date prefix; reuse them as-is)
-     - If the directory doesn't exist, create: `.artifacts/YYYY-MM-DD-eng-XXXX-description/` — prefix with today's date (`date +%F`), everything kebab-case (lowercase, hyphen-separated)
+   - Filename: `.artifacts/TASKNAME/NN-research-DESCRIPTION.md`
+     - First, check the task directory in your system prompt. If you do not see it, find the task directory: `ls -La .artifacts | grep -i "eng-XXXX"`
+     - If the directory doesn't exist, create: `.artifacts/ENG-XXXX-description/`
      - Format: `NN-research-DESCRIPTION.md` where NN is a zero-padded chronological index and DESCRIPTION is a 2-4 word kebab-case slug
      - **Chronological indexing**: `ls -La` the task directory, find the highest existing NN- prefix, and use the next number. First document = `01-`, second = `02-`, etc.
      - Directory naming:
-       - With ticket: `.artifacts/2026-07-03-eng-1478-parent-child-tracking/02-research-parent-child-tracking.md`
-       - Without ticket: `.artifacts/2026-07-03-authentication-flow/02-research-auth-flow.md`
+       - With ticket: `.artifacts/ENG-1478-parent-child-tracking/02-research-parent-child-tracking.md`
+       - Without ticket: `.artifacts/authentication-flow/02-research-auth-flow.md`
 
 6. **Generate research document:**
    - Use the metadata gathered in step 4
@@ -114,7 +115,7 @@ Then wait for the user's research query.
 
    `Read({SKILLBASE}/references/research_template.md)`
 
-   - Write the document there.
+   - Write the document to `.artifacts/TASKNAME/NN-research-DESCRIPTION.md`
 
 7. **Add GitHub permalinks for code references:**
    For code references in the repo you're researching (if on main or pushed):
@@ -122,14 +123,14 @@ Then wait for the user's research query.
    - Create permalinks: `https://github.com/{owner}/{repo}/blob/{commit}/{file}#L{line}`
 
 
-8. **Close the phase.**
+8. **Respond to the user according to the template**
    - Read the final output template:
    `Read({SKILLBASE}/references/research_final_answer.md)`
    - Respond following the template exactly. Then:
      - **Auto-advance OFF** (or `$ORCA_TERMINAL_HANDLE` is empty): stop here. Send nothing.
-     - **Auto-advance ON** and `$ORCA_TERMINAL_HANDLE` non-empty: as your final action, run exactly this one command — do not list terminals or run anything else first. It waits for this session to go idle (your turn to finish), then launches the design phase in this same terminal. Note the injected command carries **no** `--auto`: `plan-design` is the human gate where the auto chain stops.
+     - **Auto-advance ON** and `$ORCA_TERMINAL_HANDLE` non-empty: as your final action, run exactly this one command, substituting `TASKNAME` with the actual task directory name — do not list terminals or run anything else first. It waits for this session to go idle, clears the session with `/clear`, then launches the design phase in this same terminal, passing the task directory explicitly (the cleared session has no context left to infer it from). Note the injected command carries **no** `--auto`: `create-design-discussion` is the human gate where the auto chain stops. (Deliberately no `--terminal` flag: the orca CLI resolves the current terminal from the PTY; `$ORCA_TERMINAL_HANDLE` can go stale when Orca recreates terminals, so never pass it.)
        ```bash
-       nohup bash -c 'sleep 2; orca terminal wait --terminal "$ORCA_TERMINAL_HANDLE" --for tui-idle --timeout-ms 600000; orca terminal send --terminal "$ORCA_TERMINAL_HANDLE" --text "/plan-design" --enter' >/dev/null 2>&1 &
+       nohup bash -c 'sleep 2; orca terminal wait --for tui-idle --timeout-ms 600000; orca terminal send --text "/clear" --enter; sleep 2; orca terminal send --text "/create-design-discussion .artifacts/TASKNAME" --enter' >/dev/null 2>&1 &
        ```
 
 9. **Handle follow-up questions:**
@@ -203,7 +204,7 @@ technical depth and thoroughness.
   - ALWAYS gather metadata before writing the document (step 5 before step 6)
   - NEVER write the research document with placeholder values
 - **Path handling**: Task-specific research goes in .artifacts/
-  - Use `.artifacts/YYYY-MM-DD-eng-XXXX-description/NN-research-DESCRIPTION.md` for task research
+  - Use `.artifacts/ENG-XXXX-description/NN-research-DESCRIPTION.md` for task research
 
 ## Response
 

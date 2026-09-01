@@ -5,7 +5,7 @@ description: "Lightweight in-session context gathering: before acting on a task,
 
 # Fanout — lightweight context gathering
 
-Gather context by fanning out parallel research subagents, then synthesize what they found into the session. This is the in-session, throwaway sibling of `/plan-research`: same fan-out instinct, none of the ceremony. No artifact store, no templates, no output files — the deliverable is a short synthesis in the conversation.
+Gather context by fanning out parallel research subagents, then synthesize what they found into the session. This is the in-session, throwaway sibling of `/research-codebase`: same fan-out instinct, none of the ceremony. No artifact store, no templates, no output files — the deliverable is a short synthesis in the conversation.
 
 ## Scope
 

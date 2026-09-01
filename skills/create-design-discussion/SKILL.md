@@ -1,13 +1,8 @@
 ---
-name: plan-design
-description: "Personal planning front-end (step 3 of 4) for the demo codebase: turn research into a design discussion with OPEN design questions only the user can resolve. Forked from rpi create-design-discussion. Next step: /plan-author."
+name: create-design-discussion
+description:  first step of planning
+disable-model-invocation: true
 ---
-
-# Design Discussion Phase
-
-You are now in the Design Discussion phase. Based on the research findings and the user's change request, work with them to make design decisions.
-
-## Steps to follow after receiving the user's request
 
 **First, ensure the artifact store symlink exists in this worktree** (idempotent — re-running is a no-op):
 
@@ -24,13 +19,16 @@ if [ ! -L .artifacts ]; then
 fi
 ```
 
-**Note on `-a` / `--auto`:** if this flag appears in the arguments, ignore it. `plan-design` is the
-human gate where the auto-advance chain stops — it never launches the next phase automatically.
+# Design Discussion Phase
+
+You are now in the Design Discussion phase. Based on the research findings and the user's change request, work with them to make design decisions.
+
+## Steps to follow after receiving the user's request
 
 1. **Read the files in the task artifact directory and any mentioned files immediately and FULLY**:
    - `ls -La .artifacts/TASKSLUG` to find all related documents in the task directory. Do NOT use the Grep or Glob tools, or `ls -l` as the directory may be a symlink.\
-   - Ticket files (e.g., `.artifacts/YYYY-MM-DD-eng-1234-description/ticket.md`)
-   - Research documents (e.g. `.artifacts/YYYY-MM-DD-eng-1234-description/NN-research-DESCRIPTION.md`)
+   - Ticket files (e.g., `.artifacts/eng-1234-description/ticket.md`)
+   - Research documents (e.g. `.artifacts/eng-1234-description/NN-research-DESCRIPTION.md`)
    - **DO NOT read research questions documents** - research questions are inputs to the research phase only.
    - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files, never read files partially - if a file is mentioned, read it completely
    - do not spawn sub-tasks before reading these files yourself in the main context
@@ -68,14 +66,14 @@ human gate where the auto-advance chain stops — it never launches the next pha
 
 `Read({SKILLBASE}/references/design_discussion_template.md)`
 
-5. **Write the design discussion** to `.artifacts/YYYY-MM-DD-eng-XXXX-description/NN-design-discussion-DESCRIPTION.md`
-   - First, check the task directory in your system prompt. If you don't see it, find the task directory: `ls -La .artifacts | grep -i "eng-XXXX"` (match on the ticket/slug — existing directories may or may not carry a date prefix; reuse them as-is)
-   - If the directory doesn't exist, create: `.artifacts/YYYY-MM-DD-eng-XXXX-description/` — prefix with today's date (`date +%F`), everything kebab-case (lowercase, hyphen-separated)
+5. **Write the design discussion** to `.artifacts/ENG-XXXX-description/NN-design-discussion-DESCRIPTION.md`
+   - First, check the task directory in your system prompt. If you don't see it, find the task directory: `ls -La .artifacts | grep -i "eng-XXXX"`
+   - If the directory doesn't exist, create: `.artifacts/ENG-XXXX-description/`
    - Format: `NN-design-discussion-DESCRIPTION.md` where NN is a zero-padded chronological index and DESCRIPTION is a 2-4 word kebab-case slug
    - **Chronological indexing**: `ls` the task directory, find the highest existing NN- prefix, and use the next number. First document = `01-`, second = `02-`, etc.
    - Directory naming:
-     - With ticket: `.artifacts/2026-07-03-eng-1478-parent-child-tracking/03-design-discussion-parent-child-tracking.md`
-     - Without ticket: `.artifacts/2026-07-03-improve-error-handling/03-design-discussion-error-handling.md`
+     - With ticket: `.artifacts/ENG-1478-parent-child-tracking/03-design-discussion-parent-child-tracking.md`
+     - Without ticket: `.artifacts/improve-error-handling/03-design-discussion-error-handling.md`
 
 <content_guidance>
 **Outline High-level product spec** - Current state, desired end state, what we're not doing in terms of user experience or functionality
@@ -110,7 +108,7 @@ human gate where the auto-advance chain stops — it never launches the next pha
 
 `Read({SKILLBASE}/references/design_discussion_final_answer.md)`
 
-If hook context says all design questions have been resolved, read the resolved template instead:
+If all design questions have been resolved (the conversation shows the user answered or dismissed every OPEN question), read the resolved template instead:
 
 `Read({SKILLBASE}/references/design_discussion_final_answer_resolved.md)`
 
