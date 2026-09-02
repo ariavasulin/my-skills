@@ -1,4 +1,7 @@
-// Generated from <.artifacts/TASK/NN-workflow-SLUG.md> — edit the doc, regenerate; don't hand-patch.
+// Generated from approved document <.artifacts/TASK/NN-workflow-SLUG.md> · target: native.
+// Edit the approved document and regenerate; do not hand-patch this file.
+// Native compiler precondition: reject the document before emitting this file if
+// any approved node has a backend other than `claude`.
 export const meta = {
   name: 'SLUG',
   description: 'ONE LINE FROM THE DOC GOAL',
@@ -59,7 +62,7 @@ const mustSucceed = (label, result) => {
 const skillPrompt = (skill, args, handoff, failIfMissing) => [
   `/${skill} ${args}`,
   `If the Skill tool is unavailable, Read ~/.claude/skills/${skill}/SKILL.md (or the matching`,
-  `.claude/skills / .agents/skills entry in this repo) and follow it exactly with the arguments above.`,
+  `.claude/skills or shared .agents/skills entry in this repo) and follow it exactly with the arguments above.`,
   `Start from the repo root. Do not restate or reinterpret the skill's procedure.`,
   handoff ? `Return: ${handoff}` : '',
   failIfMissing ? failClosed(failIfMissing) : '',
@@ -67,6 +70,19 @@ const skillPrompt = (skill, args, handoff, failIfMissing) => [
 
 // Free-form node (only when the doc's stanza justified it):
 // const prompt = `...thin instruction that names paths and the return shape...`
+
+// ---- Native node options -------------------------------------------------
+// The compiler copies the exact Claude model from each approved node and fixes
+// effort at high. agentType is emitted only when that node's stanza declares it;
+// it is routing metadata, never the source of tools, permissions, or instructions.
+const nativeOptions = (node) => ({
+  label: node.label,
+  phase: node.phase,
+  model: node.model,
+  effort: 'high',
+  ...(node.agentType ? { agentType: node.agentType } : {}),
+  ...(node.schema ? { schema: node.schema } : {}),
+})
 
 // ---- Schemas (one per node whose handoff a later node or this script parses)
 // A stop-stage node's schema carries `ok` + `blocked` so it can fail; a producer
@@ -115,8 +131,8 @@ const EXAMPLE_SCHEMA = {
 
 // ---- Nodes ----------------------------------------------------------------
 // Per-node options come straight from the doc stanza:
-//   model: 'fable' | 'opus'        effort: 'low' | 'medium' | 'high'
-//   agentType: 'codebase-analyzer' | 'general-purpose' | ...
+//   backend: 'claude'              model: exact Claude model from the document
+//   effort: always 'high'          agentType: only when the document declares it
 //   phase: the stage title         schema: when the handoff is parsed
 
 // One cheap agent proves the doc's Live dependencies before anything fans out.
@@ -133,7 +149,7 @@ const pre = mustSucceed('preflight', await agent(
     'here — no subagent can complete that flow. Report it dead; do not attempt a repair.',
     failClosed('a proven-live result for every dependency above'),
   ].join('\n'),
-  { label: 'preflight', phase: 'Preflight', model: 'fable', effort: 'low', agentType: 'general-purpose', schema: PREFLIGHT_SCHEMA },
+  nativeOptions({ backend: 'claude', label: 'preflight', phase: 'Preflight', model: 'fable', agentType: 'general-purpose', schema: PREFLIGHT_SCHEMA }),
 ))
 const dead = pre.checks.filter(c => !c.alive)
 if (dead.length) throw new Error(`preflight: dead dependencies — ${dead.map(c => c.dependency).join(', ')}`)
@@ -141,7 +157,7 @@ if (dead.length) throw new Error(`preflight: dead dependencies — ${dead.map(c 
 phase('Stage 1')
 const r = mustSucceed('research', await agent(
   skillPrompt('create-research', '.artifacts/TASK', 'artifactPath and count', 'the research artifact'),
-  { label: 'research', phase: 'Stage 1', model: 'opus', effort: 'high', agentType: 'general-purpose', schema: PRODUCER_SCHEMA },
+  nativeOptions({ backend: 'claude', label: 'research', phase: 'Stage 1', model: 'opus', agentType: 'general-purpose', schema: PRODUCER_SCHEMA }),
 ))
 
 // Gate on the edge right after the producer, not at the end of the run: Stages
@@ -160,8 +176,8 @@ const implPrompt = (n) => [
   declareUntested,
 ].join('\n')
 const impl = await parallel([
-  () => agent(implPrompt(1), { label: 'impl:1', phase: 'Stage 2', model: 'fable', effort: 'high', agentType: 'general-purpose' }),
-  () => agent(implPrompt(2), { label: 'impl:2', phase: 'Stage 2', model: 'fable', effort: 'high', agentType: 'general-purpose' }),
+  () => agent(implPrompt(1), nativeOptions({ backend: 'claude', label: 'impl:1', phase: 'Stage 2', model: 'fable', agentType: 'general-purpose' })),
+  () => agent(implPrompt(2), nativeOptions({ backend: 'claude', label: 'impl:2', phase: 'Stage 2', model: 'fable', agentType: 'general-purpose' })),
 ])
 // Failure polarity from the stanza. parallel() resolves a failed thunk to null,
 // but a blocked-and-chatty agent resolves to a string — check both:
@@ -171,8 +187,34 @@ impl.forEach((x, i) => mustSucceed(`impl:${i + 1}`, x))                      // 
 phase('Stage 3')
 const verdict = await agent(
   skillPrompt('verify-deliverable', '.artifacts/TASK', 'structured verdict'),
-  { label: 'verify', phase: 'Stage 3', model: 'opus', effort: 'high', agentType: 'general-purpose', schema: EXAMPLE_SCHEMA },
+  nativeOptions({ backend: 'claude', label: 'verify', phase: 'Stage 3', model: 'opus', agentType: 'general-purpose', schema: EXAMPLE_SCHEMA }),
 )
+
+// ---- Optional portable native primitives --------------------------------
+// Emit only the examples the approved graph declares, replacing every literal
+// below with that document's IDs, paths, deterministic args, models, and phases.
+
+// Deterministic args and a positive budget target can size a pipeline without
+// depending on spent-token accounting:
+// const requestedItems = Array.isArray(args.items) ? args.items : []
+// if (!Number.isFinite(budget.total) || budget.total <= 0) {
+//   throw new Error('budget.total must be a positive number')
+// }
+// const itemLimit = Math.max(1, Math.floor(budget.total / 4000))
+// const selectedItems = requestedItems.slice(0, itemLimit)
+// const inspected = await pipeline(selectedItems, async (item, index) => mustSucceed(
+//   `inspect:${index + 1}`,
+//   await agent(
+//     skillPrompt('inspect-item', String(item), 'plain-text finding', 'an item finding'),
+//     nativeOptions({ backend: 'claude', label: `inspect:${index + 1}`, phase: 'Inspect', model: 'fable' }),
+//   ),
+// ))
+
+// One native workflow may invoke one approved child by repository-relative path:
+// const child = await workflow({
+//   scriptPath: '.artifacts/TASK/workflow-CHILD.native.js',
+//   args: { artifactPath: r.artifactPath },
+// })
 
 // Terminal return = exactly what the human boundary in the doc needs to decide.
 return { preflight: pre.checks, research: r, impl, verdict }

@@ -1,0 +1,16 @@
+{
+  "adapters": {
+    "claude": {
+      "label": "Claude Code · high effort",
+      "command": ["claude", "--print", "--effort", "high", "--permission-mode", "acceptEdits", "--allowedTools", "WebSearch", "WebFetch", "--no-session-persistence"],
+      "stdin": "{prompt}",
+      "flags": { "model": ["--model"] }
+    },
+    "codex": {
+      "label": "Codex CLI · high effort",
+      "command": ["codex", "--search", "-c", "model_reasoning_effort=\"high\"", "exec", "--skip-git-repo-check", "--sandbox", "workspace-write", "--cd", "{workspace}", "-"],
+      "stdin": "{prompt}",
+      "flags": { "model": ["--model"] }
+    }
+  }
+}
